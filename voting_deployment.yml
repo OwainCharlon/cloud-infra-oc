@@ -1,0 +1,198 @@
+# namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: infra-cloud-oc
+---
+#volumes
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: voting_app_volume
+#   namespace: infra-cloud-oc
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 5Gi
+#   storageClassName: standard-rwo
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: result_app_volume
+#   namespace: infra-cloud-oc
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 5Gi
+#   storageClassName: standard-rwo
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db_volume
+  namespace: infra-cloud-oc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard-rwo
+---
+#voting_app
+apiVersion: v1
+kind: Deployment
+metadata:
+    name: vote
+    namespace: infra-cloud-oc
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: vote
+    template:
+        metadata:
+            labels:
+                app: vote
+        spec:
+            containers:
+                - name: vote
+                  image: owaincharlon/voting_app:v1
+                  ports:
+                      - containerPort: 80
+                  imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: vote
+    namespace: infra-cloud-oc
+    labels:
+        run: vote
+spec:
+    ports:
+        - port: 80
+          protocol: TCP
+    selector:
+        app: vote
+    type: LoadBalancer
+---
+apiVersion: v1
+kind: Deployment
+metadata:
+    name: result
+    namespace: infra-cloud-oc
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: result
+    template:
+        metadata:
+            labels:
+                app: result
+        spec:
+            containers:
+                - name: result
+                  image: owaincharlon/result_app:v1
+                  ports:
+                      - containerPort: 4000
+                  imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: result
+    namespace: infra-cloud-oc
+    labels:
+        run: result
+spec:
+    ports:
+        - port: 8080
+          protocol: TCP
+    selector:
+        app: result
+    type: LoadBalancer
+---
+apiVersion: v1
+kind: Deployment
+metadata:
+    name: worker
+    namespace: infra-cloud-oc
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: worker
+    template:
+        metadata:
+            labels:
+                app: worker
+        spec:
+            containers:
+                - name: worker
+                  image: owaincharlon/worker:v1
+                  # ports:
+                  #     - containerPort: 4000
+                  # imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Deployment
+metadata:
+    name: redis
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: redis
+    template:
+        metadata:
+            labels:
+                app: redis
+        spec:
+            containers:
+                - name: redis
+                  image: redis:alpine
+                  # ports:
+                  #     - containerPort: 4000
+                  # imagePullPolicy: Always
+
+---
+apiVersion: v1
+kind: Deployment
+metadata:
+    name: db
+    namespace: infra-cloud-oc
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: db
+    volumes:
+    - name: pvc-db
+      persistentVolumeClaim:
+      claimName: db_volume
+    template:
+        metadata:
+            labels:
+                app: db
+        spec:
+            containers:
+                - name: db
+                  image: postgres:15-alpine
+                  # ports:
+                  #     - containerPort: 4000
+                  # imagePullPolicy: Always
+                  env:
+                    - name: POSTGRES_USER
+                      value: postgres
+                    - name: POSTGRES_PASSWORD
+                      value: postgres
+                  volumeMounts:
+                  - mountPath: /var/lib/postgresql/data
+                    name: pvc_db

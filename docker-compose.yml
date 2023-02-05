@@ -1,0 +1,68 @@
+services:
+  vote:
+    image: voting_app:v1
+    volumes:
+     - ./vote:/app
+    ports:
+      - "5000:80"
+    networks:
+      - front-tier
+      - back-tier
+
+  result:
+    image: result_app:v1
+    volumes:
+      - ./result:/app
+    ports:
+      - "5001:4000"
+      - "5858:5858"
+    networks:
+      - front-tier
+      - back-tier
+
+  worker:
+    image: worker:v1
+    networks:
+      - back-tier
+
+  redis:
+    image: redis:alpine
+    networks:
+      - back-tier
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+    volumes:
+      - "db-data:/var/lib/postgresql/data"
+    networks:
+      - back-tier
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    networks:
+      - back-tier
+  # this service runs once to seed the database with votes
+  # it won't run unless you specify the "seed" profile
+  # docker compose --profile seed up -d
+  # seed:
+  #   build: ./seed-data
+  #   profiles: ["seed"]
+  #   depends_on:
+  #     vote:
+  #       condition: service_healthy 
+  #   networks:
+  #     - front-tier
+  #   restart: "no"
+
+volumes:
+  db-data:
+
+networks:
+  front-tier:
+  back-tier:
