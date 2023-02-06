@@ -48,6 +48,8 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+    labels:
+      app: vote
     name: vote
     namespace: infra-cloud-oc
 spec:
@@ -60,6 +62,7 @@ spec:
             labels:
                 app: vote
         spec:
+            hostname: vote
             containers:
                 - name: vote
                   image: owaincharlon/owain-infra-cloud-voting_app:v1_prod
@@ -85,6 +88,8 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+    labels:
+      app: result
     name: result
     namespace: infra-cloud-oc
 spec:
@@ -97,6 +102,7 @@ spec:
             labels:
                 app: result
         spec:
+            hostname: result
             containers:
                 - name: result
                   image: owaincharlon/owain-infra-cloud-result_app:v1_prod
@@ -113,7 +119,7 @@ metadata:
         run: result
 spec:
     ports:
-        - port: 8080
+        - port: 4000
           protocol: TCP
     selector:
         app: result
@@ -122,6 +128,8 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+    labels:
+      app: worker
     name: worker
     namespace: infra-cloud-oc
 spec:
@@ -134,16 +142,33 @@ spec:
             labels:
                 app: worker
         spec:
+            hostname: worker
             containers:
                 - name: worker
                   image: owaincharlon/owain-infra-cloud-worker:v1_prod
                   # ports:
                   #     - containerPort: 4000
                   # imagePullPolicy: Always
+# ---
+#service worker
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: worker-service
+#   namespace: infra-cloud-oc
+# spec:
+#   selector:
+#     app: worker
+#   ports:
+#     - port: 6379
+#       targetPort: 6379
+#   type: ClusterIP
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+    labels:
+      app: redis
     name: redis
     namespace: infra-cloud-oc
 spec:
@@ -156,16 +181,36 @@ spec:
             labels:
                 app: redis
         spec:
+            hostname: redis
             containers:
                 - name: redis
                   image: redis:alpine
-                  # ports:
-                  #     - containerPort: 4000
-                  # imagePullPolicy: Always
+                  ports:
+                  - containerPort: 6379
+                    name: redis
+---
+#service redis
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: redis
+  name: redis
+  namespace: infra-cloud-oc
+spec:
+  type: ClusterIP
+  ports:
+  - name: "redis-service"
+    port: 6379
+    targetPort: 6379
+  selector:
+    app: redis
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+    labels:
+      app: db
     name: db
     namespace: infra-cloud-oc
 spec:
@@ -182,6 +227,7 @@ spec:
             labels:
                 app: db
         spec:
+            # hostname: db
             containers:
                 - name: db
                   image: postgres:15-alpine
@@ -193,21 +239,28 @@ spec:
                       value: postgres
                     - name: POSTGRES_PASSWORD
                       value: postgres
-                #   volumeMounts:
-                #   - mountPath: /var/lib/postgresql/data
-                #     name: pvc-db
                   ports:
                     - containerPort: 5432
+          #         volumeMounts:
+          #         - mountPath: /var/lib/postgresql/data
+          #         name: db-data
+          # volumes:
+          #   - name: db-data
+          #   emptyDir: {} 
 ---
+#service db
 apiVersion: v1
 kind: Service
 metadata:
+  labels:
+    app: db
   name: db
   namespace: infra-cloud-oc
 spec:
-  selector:
-    app.kubernetes.io/name: db
+  type: ClusterIP
   ports:
-    - protocol: TCP
-      port: 5432
-      targetPort: 5432
+  - name: "db-service"
+    port: 5432
+    targetPort: 5432
+  selector:
+    app: db
