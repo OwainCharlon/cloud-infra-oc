@@ -2,14 +2,14 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: infra-cloud-oc
+  name: dev-voting-app
 ---
 #volumes
 # apiVersion: v1
 # kind: PersistentVolumeClaim
 # metadata:
 #   name: voting_app_volume
-#   namespace: infra-cloud-oc
+#   namespace: dev-voting-app
 # spec:
 #   accessModes:
 #     - ReadWriteOnce
@@ -22,7 +22,7 @@ metadata:
 # kind: PersistentVolumeClaim
 # metadata:
 #   name: result_app_volume
-#   namespace: infra-cloud-oc
+#   namespace: dev-voting-app
 # spec:
 #   accessModes:
 #     - ReadWriteOnce
@@ -35,7 +35,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: db-volume
-  namespace: infra-cloud-oc
+  namespace: dev-voting-app
 spec:
   accessModes:
     - ReadWriteOnce
@@ -51,7 +51,7 @@ metadata:
     labels:
       app: vote
     name: vote
-    namespace: infra-cloud-oc
+    namespace: dev-voting-app
 spec:
     replicas: 1
     selector:
@@ -74,7 +74,7 @@ apiVersion: v1
 kind: Service
 metadata:
     name: vote
-    namespace: infra-cloud-oc
+    namespace: dev-voting-app
     labels:
         run: vote
 spec:
@@ -91,7 +91,7 @@ metadata:
     labels:
       app: result
     name: result
-    namespace: infra-cloud-oc
+    namespace: dev-voting-app
 spec:
     replicas: 1
     selector:
@@ -114,7 +114,7 @@ apiVersion: v1
 kind: Service
 metadata:
     name: result
-    namespace: infra-cloud-oc
+    namespace: dev-voting-app
     labels:
         run: result
 spec:
@@ -131,7 +131,7 @@ metadata:
     labels:
       app: worker
     name: worker
-    namespace: infra-cloud-oc
+    namespace: dev-voting-app
 spec:
     replicas: 1
     selector:
@@ -155,7 +155,7 @@ spec:
 # kind: Service
 # metadata:
 #   name: worker-service
-#   namespace: infra-cloud-oc
+#   namespace: dev-voting-app
 # spec:
 #   selector:
 #     app: worker
@@ -170,7 +170,7 @@ metadata:
     labels:
       app: redis
     name: redis
-    namespace: infra-cloud-oc
+    namespace: dev-voting-app
 spec:
     replicas: 1
     selector:
@@ -196,7 +196,7 @@ metadata:
   labels:
     app: redis
   name: redis
-  namespace: infra-cloud-oc
+  namespace: dev-voting-app
 spec:
   type: ClusterIP
   ports:
@@ -212,7 +212,7 @@ metadata:
     labels:
       app: db
     name: db
-    namespace: infra-cloud-oc
+    namespace: dev-voting-app
 spec:
     replicas: 1
     selector:
@@ -255,7 +255,7 @@ metadata:
   labels:
     app: db
   name: db
-  namespace: infra-cloud-oc
+  namespace: dev-voting-app
 spec:
   type: ClusterIP
   ports:
